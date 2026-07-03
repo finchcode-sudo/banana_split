@@ -1,11 +1,8 @@
-// lib/main.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-
 
 import 'package:banana_split_flutter/state/create_notifier.dart';
 import 'package:banana_split_flutter/state/restore_notifier.dart';
@@ -19,16 +16,11 @@ import 'package:banana_split_flutter/widgets/language_selector.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ═══════════════════════════════════════════════════
-  // 改动1: 先显示启动页，再加载数据
-  // ═══════════════════════════════════════════════════
   runApp(const SplashScreenApp());
 
-  // 加载 locale（这个很快，可以继续）
   final localeNotifier = LocaleNotifier();
   await localeNotifier.load();
 
-  // 注册许可证（移到后台）
   LicenseRegistry.addLicense(() async* {
     yield const LicenseEntryWithLineBreaks(
       ['Banana Split'],
@@ -46,18 +38,10 @@ Future<void> main() async {
     );
   });
 
-  // ═══════════════════════════════════════════════════
-  // 改动2: 不再加载 wordlist，延迟到 CreateNotifier 中加载
-  // 删掉这两行：
-  // final wordlistContent = await rootBundle.loadString('assets/wordlist.txt');
-  // final passphraseGenerator = PassphraseGenerator.fromString(wordlistContent);
-  // ═══════════════════════════════════════════════════
-
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: localeNotifier),
-        // 传 null，让 CreateNotifier 自己按需加载
         ChangeNotifierProvider(
           create: (_) => CreateNotifier(null),
         ),
@@ -70,9 +54,6 @@ Future<void> main() async {
   );
 }
 
-// ═══════════════════════════════════════════════════
-// 新增：启动页 Widget
-// ═══════════════════════════════════════════════════
 class SplashScreenApp extends StatelessWidget {
   const SplashScreenApp({super.key});
 
@@ -96,7 +77,7 @@ class SplashScreenApp extends StatelessWidget {
       ),
       themeMode: ThemeMode.system,
       home: Scaffold(
-        backgroundColor: Theme.of(context).colorScheme.background,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         body: const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -118,7 +99,6 @@ class SplashScreenApp extends StatelessWidget {
   }
 }
 
-// BananaSplitApp 保持不变
 class BananaSplitApp extends StatelessWidget {
   const BananaSplitApp({super.key});
 
@@ -158,7 +138,6 @@ class BananaSplitApp extends StatelessWidget {
   }
 }
 
-// HomeShell 保持不变
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -171,11 +150,11 @@ class _HomeShellState extends State<HomeShell> {
   final _filesKey = GlobalKey<FilesScreenState>();
 
   List<Widget> _buildScreens() => [
-    const CreateScreen(),
-    RestoreScreen(isActive: _selectedIndex == 1),
-    FilesScreen(key: _filesKey),
-    const AboutScreen(),
-  ];
+        const CreateScreen(),
+        RestoreScreen(isActive: _selectedIndex == 1),
+        FilesScreen(key: _filesKey),
+        const AboutScreen(),
+      ];
 
   @override
   Widget build(BuildContext context) {
