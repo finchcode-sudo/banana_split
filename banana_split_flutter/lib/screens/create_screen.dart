@@ -115,7 +115,6 @@ class _InputFormState extends State<_InputForm> {
                     final parsed = int.tryParse(value);
                     if (parsed != null) {
                       notifier.updateTotalShards(parsed);
-                      // Update required field if it was auto-clamped
                       final reqText = notifier.requiredShards.toString();
                       if (_requiredController.text != reqText) {
                         _requiredController.text = reqText;
@@ -158,12 +157,19 @@ class _InputFormState extends State<_InputForm> {
               ),
             ),
           const SizedBox(height: 16),
+          // ═══════════════════════════════════════════════
+          // 改动在这里：PassphraseField 的 onRegenerate 和 onToggleMode
+          // ═══════════════════════════════════════════════
           PassphraseField(
             passphrase: notifier.passphrase,
             isManual: notifier.useManualPassphrase,
             onChanged: notifier.updatePassphrase,
-            onRegenerate: notifier.regeneratePassphrase,
-            onToggleMode: notifier.toggleManualPassphrase,
+            onRegenerate: () async {
+              await notifier.regeneratePassphrase();
+            },
+            onToggleMode: () async {
+              await notifier.toggleManualPassphrase();
+            },
           ),
           if (notifier.error != null) ...[
             const SizedBox(height: 12),
@@ -173,8 +179,15 @@ class _InputFormState extends State<_InputForm> {
             ),
           ],
           const SizedBox(height: 24),
+          // ═══════════════════════════════════════════════
+          // 改动在这里：Generate 按钮
+          // ═══════════════════════════════════════════════
           FilledButton(
-            onPressed: notifier.canGenerate ? notifier.generate : null,
+            onPressed: notifier.canGenerate
+                ? () async {
+                    await notifier.generate();
+                  }
+                : null,
             child: Text(l10n.createGenerateButton),
           ),
         ],
@@ -247,6 +260,9 @@ class _ResultsView extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
+              // ═══════════════════════════════════════════════
+              // 改动在这里：Back 按钮（不需要 async）
+              // ═══════════════════════════════════════════════
               OutlinedButton.icon(
                 onPressed: notifier.backToEdit,
                 icon: const Icon(Icons.arrow_back),
