@@ -1,3 +1,4 @@
+// lib/main.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,14 +19,16 @@ import 'package:banana_split_flutter/widgets/language_selector.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final wordlistContent =
-      await rootBundle.loadString('assets/wordlist.txt');
-  final passphraseGenerator =
-      PassphraseGenerator.fromString(wordlistContent);
+  // ═══════════════════════════════════════════════════
+  // 改动1: 先显示启动页，再加载数据
+  // ═══════════════════════════════════════════════════
+  runApp(const SplashScreenApp());
 
+  // 加载 locale（这个很快，可以继续）
   final localeNotifier = LocaleNotifier();
   await localeNotifier.load();
 
+  // 注册许可证（移到后台）
   LicenseRegistry.addLicense(() async* {
     yield const LicenseEntryWithLineBreaks(
       ['Banana Split'],
@@ -43,12 +46,20 @@ Future<void> main() async {
     );
   });
 
+  // ═══════════════════════════════════════════════════
+  // 改动2: 不再加载 wordlist，延迟到 CreateNotifier 中加载
+  // 删掉这两行：
+  // final wordlistContent = await rootBundle.loadString('assets/wordlist.txt');
+  // final passphraseGenerator = PassphraseGenerator.fromString(wordlistContent);
+  // ═══════════════════════════════════════════════════
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: localeNotifier),
+        // 传 null，让 CreateNotifier 自己按需加载
         ChangeNotifierProvider(
-          create: (_) => CreateNotifier(passphraseGenerator),
+          create: (_) => CreateNotifier(null),
         ),
         ChangeNotifierProvider(
           create: (_) => RestoreNotifier(),
@@ -59,6 +70,55 @@ Future<void> main() async {
   );
 }
 
+// ═══════════════════════════════════════════════════
+// 新增：启动页 Widget
+// ═══════════════════════════════════════════════════
+class SplashScreenApp extends StatelessWidget {
+  const SplashScreenApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Banana Split',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.amber,
+          brightness: Brightness.light,
+        ),
+        useMaterial3: true,
+      ),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.amber,
+          brightness: Brightness.dark,
+        ),
+        useMaterial3: true,
+      ),
+      themeMode: ThemeMode.system,
+      home: Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.background,
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.lock_outline,
+                size: 64,
+                color: Colors.amber,
+              ),
+              SizedBox(height: 24),
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('加载中...'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// BananaSplitApp 保持不变
 class BananaSplitApp extends StatelessWidget {
   const BananaSplitApp({super.key});
 
@@ -98,6 +158,7 @@ class BananaSplitApp extends StatelessWidget {
   }
 }
 
+// HomeShell 保持不变
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
