@@ -214,6 +214,7 @@ jobs:
   build-windows:
     name: Build Windows
     needs: [version, test]
+    continue-on-error: true
     runs-on: windows-latest
     defaults:
       run:
@@ -268,6 +269,7 @@ jobs:
   create-release:
     name: Create GitHub Release
     needs: [version, build-android, build-windows, build-web]
+    if: always() && needs.build-android.result == 'success' && needs.build-web.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -291,6 +293,7 @@ jobs:
 
       - name: Download Windows artifact
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: windows-zip
           path: release-artifacts/
