@@ -1,0 +1,83 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+// Read signing info from key.properties (not committed to git)
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+android {
+    namespace = "com.nfcarchiver.banana_split"
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    packaging {
+        jniLibs {
+            // AGP 8+ defaults this to false, which stores .so files uncompressed:
+            // a larger download in exchange for a smaller installed footprint and
+            // faster startup. That trade is right for Play, which re-packages the
+            // AAB into per-device splits so nobody downloads the universal APK.
+            //
+            // Our Android users get the universal APK directly, from GitHub
+            // Releases and F-Droid, so for them the trade is all cost: the
+            // release APK went from 38.5 MB to 78.8 MB on the 3.44.8 bump with
+            // no change in payload. Keep the libraries compressed.
+            useLegacyPackaging = true
+        }
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8
+    }
+
+    defaultConfig {
+        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        applicationId = "com.nfcarchiver.banana_split"
+        // You can update the following values to match your application needs.
+        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        minSdk = flutter.minSdkVersion
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+    }
+
+    // Release signing config, populated from key.properties.
+    // Falls back to nothing if key.properties is missing, so `flutter run`
+    // during development doesn't break — but `flutter build apk --release`
+    // will fail loudly if you haven't set up key.properties yet, which is
+    // intentional: it stops you from accidentally shipping a debug-signed APK.
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig = keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+flutter {
+    source = "../.."
+}
